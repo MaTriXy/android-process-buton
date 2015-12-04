@@ -1,16 +1,18 @@
 package com.dd.sample;
 
-import com.dd.processbutton.ProcessButton;
+import com.dd.processbutton.iml.ActionProcessButton;
 import com.dd.sample.utils.ProgressGenerator;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 
 public class SignInActivity extends Activity implements ProgressGenerator.OnCompleteListener {
+
+    public static final String EXTRAS_ENDLESS_MODE = "EXTRAS_ENDLESS_MODE";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -21,7 +23,13 @@ public class SignInActivity extends Activity implements ProgressGenerator.OnComp
         final EditText editPassword = (EditText) findViewById(R.id.editPassword);
 
         final ProgressGenerator progressGenerator = new ProgressGenerator(this);
-        final ProcessButton btnSignIn = (ProcessButton) findViewById(R.id.btnSignIn);
+        final ActionProcessButton btnSignIn = (ActionProcessButton) findViewById(R.id.btnSignIn);
+        Bundle extras = getIntent().getExtras();
+        if(extras != null && extras.getBoolean(EXTRAS_ENDLESS_MODE)) {
+            btnSignIn.setMode(ActionProcessButton.Mode.ENDLESS);
+        } else {
+            btnSignIn.setMode(ActionProcessButton.Mode.PROGRESS);
+        }
         btnSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -35,11 +43,7 @@ public class SignInActivity extends Activity implements ProgressGenerator.OnComp
 
     @Override
     public void onComplete() {
-        startMessageActivity();
+        Toast.makeText(this, R.string.Loading_Complete, Toast.LENGTH_LONG).show();
     }
 
-    private void startMessageActivity() {
-        Intent intent = new Intent(this, MessageActivity.class);
-        startActivity(intent);
-    }
 }

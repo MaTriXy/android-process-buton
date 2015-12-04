@@ -3,59 +3,28 @@ package com.dd.processbutton;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.AttributeSet;
-import android.widget.Button;
 
-/*
- *    The MIT License (MIT)
- *
- *   Copyright (c) 2014 Danylyk Dmytro
- *
- *   Permission is hereby granted, free of charge, to any person obtaining a copy
- *   of this software and associated documentation files (the "Software"), to deal
- *   in the Software without restriction, including without limitation the rights
- *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *   copies of the Software, and to permit persons to whom the Software is
- *   furnished to do so, subject to the following conditions:
- *
- *   The above copyright notice and this permission notice shall be included in all
- *   copies or substantial portions of the Software.
- *
- *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *   SOFTWARE.
- */
-
-public class ProcessButton extends Button {
+public abstract class ProcessButton extends FlatButton {
 
     private int mProgress;
     private int mMaxProgress;
     private int mMinProgress;
 
-    private Drawable mProgressDrawable;
-    private Drawable mCompleteDrawable;
+    private GradientDrawable mProgressDrawable;
+    private GradientDrawable mCompleteDrawable;
+    private GradientDrawable mErrorDrawable;
 
     private CharSequence mLoadingText;
     private CharSequence mCompleteText;
+    private CharSequence mErrorText;
 
-    private ProgressStyle mProgressStyle;
-
-    private boolean isLoadingComplete;
-
-    // TODO save instance state
-
-    public enum ProgressStyle {
-        Submit, Action, Generate;
-    }
-
-    public ProcessButton(Context context) {
-        super(context);
-        init(context, null);
+    public ProcessButton(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        init(context, attrs);
     }
 
     public ProcessButton(Context context, AttributeSet attrs) {
@@ -63,126 +32,236 @@ public class ProcessButton extends Button {
         init(context, attrs);
     }
 
-    public ProcessButton(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        init(context, attrs);
+    public ProcessButton(Context context) {
+        super(context);
+        init(context, null);
     }
 
     private void init(Context context, AttributeSet attrs) {
         mMinProgress = 0;
         mMaxProgress = 100;
-        mProgressStyle = ProgressStyle.Submit;
+
+        mProgressDrawable = (GradientDrawable) getDrawable(R.drawable.rect_progress).mutate();
+        mProgressDrawable.setCornerRadius(getCornerRadius());
+
+        mCompleteDrawable = (GradientDrawable) getDrawable(R.drawable.rect_complete).mutate();
+        mCompleteDrawable.setCornerRadius(getCornerRadius());
+
+        mErrorDrawable = (GradientDrawable) getDrawable(R.drawable.rect_error).mutate();
+        mErrorDrawable.setCornerRadius(getCornerRadius());
 
         if (attrs != null) {
             initAttributes(context, attrs);
         }
     }
 
-    private void initAttributes(Context context, AttributeSet attrs) {
-        TypedArray attributes =
-                context.obtainStyledAttributes(attrs, R.styleable.ProcessButton, 0, 0);
+    private void initAttributes(Context context, AttributeSet attributeSet) {
+        TypedArray attr = getTypedArray(context, attributeSet, R.styleable.ProcessButton);
+
+        if (attr == null) {
+            return;
+        }
+
         try {
-            mLoadingText = attributes.getString(R.styleable.ProcessButton_progressText);
-            mCompleteText = attributes.getString(R.styleable.ProcessButton_completeText);
+            mLoadingText = attr.getString(R.styleable.ProcessButton_pb_textProgress);
+            mCompleteText = attr.getString(R.styleable.ProcessButton_pb_textComplete);
+            mErrorText = attr.getString(R.styleable.ProcessButton_pb_textError);
 
-            mProgressDrawable = attributes.getDrawable(R.styleable.ProcessButton_progressDrawable);
-            mCompleteDrawable = attributes.getDrawable(R.styleable.ProcessButton_completeDrawable);
+            int purple = getColor(R.color.purple_progress);
+            int colorProgress = attr.getColor(R.styleable.ProcessButton_pb_colorProgress, purple);
+            mProgressDrawable.setColor(colorProgress);
 
-            int index = attributes.getInteger(R.styleable.ProcessButton_progressStyle, 0);
-            mProgressStyle = ProgressStyle.values()[index];
+            int green = getColor(R.color.green_complete);
+            int colorComplete = attr.getColor(R.styleable.ProcessButton_pb_colorComplete, green);
+            mCompleteDrawable.setColor(colorComplete);
+
+            int red = getColor(R.color.red_error);
+            int colorError = attr.getColor(R.styleable.ProcessButton_pb_colorError, red);
+            mErrorDrawable.setColor(colorError);
+
         } finally {
-            attributes.recycle();
+            attr.recycle();
         }
     }
 
-    public void setProgressDrawable(Drawable progressDrawable) {
-        mProgressDrawable = progressDrawable;
-    }
-
-    public void setCompleteDrawable(Drawable completeDrawable) {
-        mCompleteDrawable = completeDrawable;
-    }
-
-    public void setCompleteText(String loadingText) {
-        mCompleteText = loadingText;
-    }
-
-    public void setLoadingText(String loadingText) {
-        mLoadingText = loadingText;
-    }
-
     public void setProgress(int progress) {
-        setText(mLoadingText);
+        mProgress = progress;
 
-        if (progress < mMinProgress) {
-            mProgress = mMinProgress;
-            isLoadingComplete = false;
-        } else if (progress > mMaxProgress) {
-            mProgress = mMaxProgress;
-            isLoadingComplete = true;
+        if (mProgress == mMinProgress) {
+            onNormalState();
+        } else if (mProgress == mMaxProgress) {
+            onCompleteState();
+        } else if (mProgress < mMinProgress){
+            onErrorState();
         } else {
-            mProgress = progress;
-            isLoadingComplete = false;
+            onProgress();
         }
 
         invalidate();
     }
 
-    private void onLoadingComplete() {
-        if (mCompleteText != null) {
-            setText(mCompleteText);
+    protected void onErrorState() {
+        if(getErrorText() != null) {
+            setText(getErrorText());
         }
+        setBackgroundCompat(getErrorDrawable());
+    }
 
-        if (mCompleteDrawable != null) {
-            setBackgroundDrawable(mCompleteDrawable);
+    protected void onProgress() {
+        if(getLoadingText() != null) {
+            setText(getLoadingText());
         }
+        setBackgroundCompat(getNormalDrawable());
+    }
+
+    protected void onCompleteState() {
+        if(getCompleteText() != null) {
+            setText(getCompleteText());
+        }
+        setBackgroundCompat(getCompleteDrawable());
+    }
+
+    protected void onNormalState() {
+        if(getNormalText() != null) {
+            setText(getNormalText());
+        }
+        setBackgroundCompat(getNormalDrawable());
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (isLoadingComplete) {
-            onLoadingComplete();
-        } else {
-            switch (mProgressStyle) {
-                case Action:
-                    drawActionButton(canvas);
-                    break;
-                case Submit:
-                    drawSubmitButton(canvas);
-                    break;
-                case Generate:
-                    drawGenerateButton(canvas);
-                    break;
-            }
+        // progress
+        if(mProgress > mMinProgress && mProgress < mMaxProgress) {
+            drawProgress(canvas);
         }
 
         super.onDraw(canvas);
     }
 
-    private void drawGenerateButton(Canvas canvas) {
-        float scale = (float) mProgress / (float) mMaxProgress;
-        float indicatorHeight = (float) getMeasuredHeight() * scale;
+    public abstract void drawProgress(Canvas canvas);
 
-        mProgressDrawable.setBounds(0, 0, getMeasuredWidth(), (int) indicatorHeight);
-        mProgressDrawable.draw(canvas);
+    public int getProgress() {
+        return mProgress;
     }
 
-    private void drawActionButton(Canvas canvas) {
-        float scale = (float) mProgress / (float) mMaxProgress;
-        float indicatorWidth = (float) getMeasuredWidth() * scale;
-
-        double indicatorHeightPercent = 0.05; // 5%
-        int bottom = (int) (getMeasuredHeight() - getMeasuredHeight() * indicatorHeightPercent);
-        mProgressDrawable.setBounds(0, bottom, (int) indicatorWidth, getMeasuredHeight());
-        mProgressDrawable.draw(canvas);
+    public int getMaxProgress() {
+        return mMaxProgress;
     }
 
-    private void drawSubmitButton(Canvas canvas) {
-        float scale = (float) mProgress / (float) mMaxProgress;
-        float indicatorWidth = (float) getMeasuredWidth() * scale;
-
-        mProgressDrawable.setBounds(0, 0, (int) indicatorWidth, getMeasuredHeight());
-        mProgressDrawable.draw(canvas);
+    public int getMinProgress() {
+        return mMinProgress;
     }
 
+    public GradientDrawable getProgressDrawable() {
+        return mProgressDrawable;
+    }
+
+    public GradientDrawable getCompleteDrawable() {
+        return mCompleteDrawable;
+    }
+
+    public CharSequence getLoadingText() {
+        return mLoadingText;
+    }
+
+    public CharSequence getCompleteText() {
+        return mCompleteText;
+    }
+
+    public void setProgressDrawable(GradientDrawable progressDrawable) {
+        mProgressDrawable = progressDrawable;
+    }
+
+    public void setCompleteDrawable(GradientDrawable completeDrawable) {
+        mCompleteDrawable = completeDrawable;
+    }
+
+    public void setNormalText(CharSequence normalText) {
+        super.setNormalText(normalText);
+        if (mProgress == mMinProgress) {
+            setText(normalText);
+        }
+    }
+
+    public void setLoadingText(CharSequence loadingText) {
+        mLoadingText = loadingText;
+    }
+
+    public void setCompleteText(CharSequence completeText) {
+        mCompleteText = completeText;
+    }
+
+    public GradientDrawable getErrorDrawable() {
+        return mErrorDrawable;
+    }
+
+    public void setErrorDrawable(GradientDrawable errorDrawable) {
+        mErrorDrawable = errorDrawable;
+    }
+
+    public CharSequence getErrorText() {
+        return mErrorText;
+    }
+
+    public void setErrorText(CharSequence errorText) {
+        mErrorText = errorText;
+    }
+
+    @Override
+    public Parcelable onSaveInstanceState() {
+        Parcelable superState = super.onSaveInstanceState();
+        SavedState savedState = new SavedState(superState);
+        savedState.mProgress = mProgress;
+
+        return savedState;
+    }
+
+    @Override
+    public void onRestoreInstanceState(Parcelable state) {
+        if (state instanceof SavedState) {
+            SavedState savedState = (SavedState) state;
+            mProgress = savedState.mProgress;
+            super.onRestoreInstanceState(savedState.getSuperState());
+            setProgress(mProgress);
+        } else {
+            super.onRestoreInstanceState(state);
+        }
+    }
+
+    /**
+     * A {@link android.os.Parcelable} representing the {@link com.dd.processbutton.ProcessButton}'s
+     * state.
+     */
+    public static class SavedState extends BaseSavedState {
+
+        private int mProgress;
+
+        public SavedState(Parcelable parcel) {
+            super(parcel);
+        }
+
+        private SavedState(Parcel in) {
+            super(in);
+            mProgress = in.readInt();
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags) {
+            super.writeToParcel(out, flags);
+            out.writeInt(mProgress);
+        }
+
+        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
+
+            @Override
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            @Override
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
+    }
 }

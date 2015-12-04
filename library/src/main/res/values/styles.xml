@@ -1,13 +1,16 @@
 <resources>
     <declare-styleable name="ProcessButton">
-        <attr name="progressText" format="string" />
-        <attr name="completeText" format="string" />
-        <attr name="progressDrawable" format="integer" />
-        <attr name="completeDrawable" format="integer" />
-        <attr name="progressStyle" format="enum">
-            <enum name="submit" value="0" />
-            <enum name="action" value="1" />
-            <enum name="generate" value="2" />
-        </attr>
+        <attr name="pb_textProgress" format="string" />
+        <attr name="pb_textComplete" format="string" />
+        <attr name="pb_textError" format="string" />
+        <attr name="pb_colorProgress" format="color" />
+        <attr name="pb_colorComplete" format="color" />
+        <attr name="pb_colorError" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="FlatButton">
+        <attr name="pb_colorPressed" format="color" />
+        <attr name="pb_colorNormal" format="color" />
+        <attr name="pb_cornerRadius" format="dimension" />
     </declare-styleable>
 </resources>

@@ -1,23 +1,38 @@
-## Description
+### Description [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.dmytrodanylyk.android-process-button/library/badge.png?style=flat)](http://goo.gl/GydnKe) [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Process%20Button-brightgreen.svg?style=flat)](https://android-arsenal.com/details/1/367)
 
-Custom android button which can indicate progress.
+Android Buttons With Built-in Progress Meters.
 
-Latest version **0.0.1**
+![](screenshots/sample1_small1.gif)
+![](screenshots/sample1_small2.gif)
 
-![](screenshots/sample1_small.gif)
+### Wiki
 
-Wiki
-
-- [Home] 
+- [Home]
 - [Screenshots]
 - [User Guide]
 
-TODO
+### Integration
 
-- [ ] Implement save instance state
-- [ ] Add possibility to use [SmoothProgressBar]
+The lib is available on Maven Central, you can find it with [Gradle, please]
 
-## License
+```
+dependencies {
+    compile 'com.github.dmytrodanylyk.android-process-button:library:1.0.4'
+}
+```
+
+### Sample
+
+<a href="https://play.google.com/store/apps/details?id=com.dd.sample.processbutton">
+  <img alt="Android app on Google Play"
+       src="https://developer.android.com/images/brand/en_app_rgb_wo_45.png" />
+</a>
+<a href="https://play.google.com/store/apps/details?id=com.inappsquared.devappsdirect">
+  <img alt="DevAppsDirect"
+       src="http://www.inappsquared.com/img/icons/devappsdirect_icon.png" width="48" height="48" />
+</a>
+
+### License
 
 ```
 The MIT License (MIT)
@@ -47,3 +62,6 @@ SOFTWARE.
 [Home]:https://github.com/dmytrodanylyk/android-process-buton/wiki
 [Screenshots]:https://github.com/dmytrodanylyk/android-process-buton/wiki/Screenshots
 [User Guide]:https://github.com/dmytrodanylyk/android-process-buton/wiki/User-Guide
+[Gradle, Please]:http://gradleplease.appspot.com/
+
+[![Analytics](https://ga-beacon.appspot.com/UA-44382495-2/android-process-buton/readme)](https://github.com/igrigorik/ga-beacon)
